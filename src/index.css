@@ -1,18 +1,22 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Cinzel:wght@500;600;700&display=swap');
 
 :root {
-  font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+  font-family: 'Archivo', 'Segoe UI', sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #0c1424;
-  background-color: #f7f4ef;
+  color: #1b1411;
+  background-color: #f2ece4;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  --ink: #0c1424;
-  --ink-soft: #50617d;
-  --blue: #0b1426;
+  --ink: #1b1411;
+  --ink-soft: #5c4d46;
+  --blood: #7a1b1b;
+  --night: #131824;
+  --mist: #f5efe7;
+  --gold: #d2b38c;
+  --panel: rgba(248, 242, 234, 0.95);
 }
 
 *,
@@ -24,7 +28,7 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: #f7f4ef;
+  background: radial-gradient(circle at top, #f7f1e7 0%, #eee3d3 45%, #e8dac9 100%);
 }
 
 a {

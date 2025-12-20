@@ -82,6 +82,16 @@ const formatFirestoreError = (error: FirestoreError) => {
   return error.message
 }
 
+const gamePhases = [
+  { label: 'Night 1', detail: 'Arrival' },
+  { label: 'Day 1', detail: 'First clues' },
+  { label: 'Night 2', detail: 'Cold trail' },
+  { label: 'Day 2', detail: 'Cross-exam' },
+  { label: 'Night 3', detail: 'Shadows' },
+  { label: 'Day 3', detail: 'Pressure rises' },
+  { label: 'Night 4', detail: 'Last strike' },
+]
+
 function App() {
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login')
   const [numberInput, setNumberInput] = useState('')
@@ -100,11 +110,16 @@ function App() {
   const [chatStreamError, setChatStreamError] = useState('')
   const [messageStreamError, setMessageStreamError] = useState('')
   const [pendingPartnerNumber, setPendingPartnerNumber] = useState('')
+  const [policeNumber, setPoliceNumber] = useState('')
+  const [policeStatus, setPoliceStatus] = useState('')
+  const [policeError, setPoliceError] = useState('')
+  const [page, setPage] = useState<'home' | 'messages'>('home')
   const messageEndRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (nextUser) => {
       setUser(nextUser)
+      setPage('home')
       setChats([])
       setMessages([])
       setActiveChatId(null)
@@ -219,6 +234,64 @@ function App() {
 
   const hasActiveChat = Boolean(activeChatId)
   const displayPartnerNumber = partnerNumber || pendingPartnerNumber
+  const totalPhases = gamePhases.length
+  const currentPhaseIndex = 0
+  const progressPercent =
+    totalPhases > 1 ? (currentPhaseIndex / (totalPhases - 1)) * 100 : 0
+  const currentPhase = gamePhases[currentPhaseIndex]
+
+  const findUserByNumber = async (targetNumber: string) => {
+    const cleanedTarget = sanitizeNumber(targetNumber)
+    if (cleanedTarget.length !== 6) {
+      return { error: 'Enter a 6-digit ID.' }
+    }
+
+    const userQuery = query(
+      collection(db, 'users'),
+      where('number', '==', cleanedTarget),
+    )
+
+    const snapshot = await getDocs(userQuery)
+    if (snapshot.empty) {
+      return { error: 'No player found with that ID.' }
+    }
+
+    return { cleanedNumber: cleanedTarget, userId: snapshot.docs[0].id }
+  }
+
+  const startChatWithNumber = async (targetNumber: string) => {
+    if (!user) {
+      return { error: 'Sign in to start a chat.' }
+    }
+
+    if (!currentNumber) {
+      return { error: 'Finish setting up your profile before chatting.' }
+    }
+
+    const lookup = await findUserByNumber(targetNumber)
+    if ('error' in lookup) {
+      return { error: lookup.error }
+    }
+
+    if (lookup.cleanedNumber === currentNumber) {
+      return { error: 'That is your own ID.' }
+    }
+
+    const chatId = [user.uid, lookup.userId].sort().join('_')
+    await setDoc(
+      doc(db, 'chats', chatId),
+      {
+        participants: [user.uid, lookup.userId],
+        participantNumbers: [currentNumber, lookup.cleanedNumber],
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true },
+    )
+
+    setActiveChatId(chatId)
+    setPendingPartnerNumber(lookup.cleanedNumber)
+    return { chatId, number: lookup.cleanedNumber }
+  }
 
   const handleAuthSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -270,49 +343,11 @@ function App() {
   const handleStartChat = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setChatError('')
-    if (!user) return
-
-    if (!currentNumber) {
-      setChatError('Finish setting up your profile before chatting.')
+    const result = await startChatWithNumber(searchNumber)
+    if ('error' in result) {
+      setChatError(result.error)
       return
     }
-
-    const cleanedTarget = sanitizeNumber(searchNumber)
-    if (cleanedTarget.length !== 6) {
-      setChatError('Enter a 6-digit ID to start a chat.')
-      return
-    }
-
-    if (cleanedTarget === currentNumber) {
-      setChatError('That is your own ID.')
-      return
-    }
-
-    const userQuery = query(
-      collection(db, 'users'),
-      where('number', '==', cleanedTarget),
-    )
-
-    const snapshot = await getDocs(userQuery)
-    if (snapshot.empty) {
-      setChatError('No user found with that ID.')
-      return
-    }
-
-    const otherUser = snapshot.docs[0]
-    const chatId = [user.uid, otherUser.id].sort().join('_')
-    await setDoc(
-      doc(db, 'chats', chatId),
-      {
-        participants: [user.uid, otherUser.id],
-        participantNumbers: [currentNumber, cleanedTarget],
-        updatedAt: serverTimestamp(),
-      },
-      { merge: true },
-    )
-
-    setActiveChatId(chatId)
-    setPendingPartnerNumber(cleanedTarget)
     setSearchNumber('')
   }
 
@@ -346,6 +381,22 @@ function App() {
     await signOut(auth)
   }
 
+  const handleContactPolice = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setPoliceError('')
+    setPoliceStatus('')
+
+    const result = await startChatWithNumber(policeNumber)
+    if ('error' in result) {
+      setPoliceError(result.error)
+      return
+    }
+
+    setPoliceStatus(`Police channel opened with ID ${result.number}.`)
+    setPoliceNumber('')
+    setPage('messages')
+  }
+
   return (
     <div className="app">
       <div className="glow glow-one" />
@@ -353,10 +404,11 @@ function App() {
       <main className="shell">
         <header className="brand">
           <div>
-            <p className="eyebrow">Winter Retreat</p>
-            <h1>Frostline Chat</h1>
+            <p className="eyebrow">Winter Retreat Mystery</p>
+            <h1>Silent Pines Case</h1>
             <p className="lede">
-              A cozy realtime chat built on Firebase with six-digit IDs.
+              Track the timeline, connect with teammates, and report to the
+              police before the final night.
             </p>
           </div>
           {user ? (
@@ -370,6 +422,25 @@ function App() {
             </div>
           ) : null}
         </header>
+
+        {user ? (
+          <nav className="top-nav">
+            <button
+              className={page === 'home' ? 'nav-link active' : 'nav-link'}
+              type="button"
+              onClick={() => setPage('home')}
+            >
+              Main page
+            </button>
+            <button
+              className={page === 'messages' ? 'nav-link active' : 'nav-link'}
+              type="button"
+              onClick={() => setPage('messages')}
+            >
+              Messages
+            </button>
+          </nav>
+        ) : null}
 
         {!user ? (
           <section className="auth-shell">
@@ -435,7 +506,7 @@ function App() {
                 ) : null}
                 {authError ? <p className="error">{authError}</p> : null}
                 <button className="primary" type="submit">
-                  {authMode === 'login' ? 'Enter chat' : 'Create account'}
+                  {authMode === 'login' ? 'Enter case' : 'Join the case'}
                 </button>
                 <p className="helper">
                   Use any six digits as your ID. Your password is stored securely
@@ -445,15 +516,78 @@ function App() {
             </div>
 
             <div className="panel highlight">
-              <h2>How it works</h2>
+              <h2>How to win</h2>
               <ul>
-                <li>Claim a six-digit ID and set a password.</li>
-                <li>Search someone by ID to open a private chat.</li>
-                <li>Messages sync instantly with Firestore.</li>
+                <li>Play each challenge to uncover hidden clues.</li>
+                <li>Share theories privately and compare alibis.</li>
+                <li>Report the murderer to the police before the final night.</li>
               </ul>
               <div className="highlight-footer">
-                <span>Built for your winter retreat crew.</span>
+                <span>Trust no one until the final reveal.</span>
               </div>
+            </div>
+          </section>
+        ) : page === 'home' ? (
+          <section className="home-grid">
+            <div className="panel progress-card">
+              <div className="progress-header">
+                <div>
+                  <h2>Time Passed</h2>
+                  <p className="helper">4 Nights • 3 Days</p>
+                </div>
+                <span className="chip muted">{Math.round(progressPercent)}%</span>
+              </div>
+              <div className="progress-track">
+                <div
+                  className="progress-fill"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+              <div className="progress-meta">
+                <span>{currentPhase?.label}</span>
+                <span>{currentPhase?.detail}</span>
+              </div>
+              <div className="phase-row">
+                {gamePhases.map((phase) => (
+                  <div key={phase.label} className="phase-pill">
+                    <span>{phase.label}</span>
+                    <small>{phase.detail}</small>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="panel action-card">
+              <h2>Operations</h2>
+              <p className="helper">
+                Move between private chats and the police line.
+              </p>
+              <button
+                className="primary action-button"
+                type="button"
+                onClick={() => setPage('messages')}
+              >
+                Open messages
+              </button>
+              <form className="police-form" onSubmit={handleContactPolice}>
+                <label className="field">
+                  <span>Police 6-digit ID</span>
+                  <input
+                    className="input"
+                    inputMode="numeric"
+                    pattern="\d{6}"
+                    placeholder="Police/admin ID"
+                    value={policeNumber}
+                    onChange={(event) =>
+                      setPoliceNumber(sanitizeNumber(event.target.value))
+                    }
+                  />
+                </label>
+                <button className="primary" type="submit">
+                  Call police
+                </button>
+                {policeError ? <p className="error">{policeError}</p> : null}
+                {policeStatus ? <p className="status">{policeStatus}</p> : null}
+              </form>
             </div>
           </section>
         ) : (
@@ -544,7 +678,7 @@ function App() {
                   </h2>
                   <p>
                     {hasActiveChat
-                      ? 'Keep it warm and friendly.'
+                      ? 'Keep your clues discreet.'
                       : 'Select a chat on the left.'}
                   </p>
                 </div>
@@ -581,7 +715,7 @@ function App() {
                       )
                     })
                   ) : (
-                    <div className="empty">Say hello to start the chat.</div>
+                    <div className="empty">Share your first clue.</div>
                   )
                 ) : (
                   <div className="empty">Pick a chat to see messages.</div>

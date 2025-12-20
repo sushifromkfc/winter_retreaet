@@ -21,13 +21,13 @@
 }
 
 .glow-one {
-  background: radial-gradient(circle, rgba(46, 230, 166, 0.7), transparent 60%);
+  background: radial-gradient(circle, rgba(122, 27, 27, 0.35), transparent 60%);
   top: -120px;
   left: -120px;
 }
 
 .glow-two {
-  background: radial-gradient(circle, rgba(255, 157, 92, 0.6), transparent 65%);
+  background: radial-gradient(circle, rgba(19, 24, 36, 0.35), transparent 65%);
   bottom: -180px;
   right: -160px;
   animation-delay: 2s;
@@ -35,15 +35,38 @@
 
 .shell {
   width: min(1200px, 100%);
-  background: rgba(255, 255, 255, 0.86);
+  background: var(--panel);
   border-radius: 32px;
-  box-shadow: 0 24px 60px rgba(12, 20, 36, 0.18);
+  box-shadow: 0 24px 60px rgba(29, 19, 16, 0.2);
   padding: 36px;
   display: grid;
   gap: 32px;
   position: relative;
   z-index: 1;
   backdrop-filter: blur(14px);
+  border: 1px solid rgba(27, 20, 17, 0.08);
+}
+
+.top-nav {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.nav-link {
+  border: 1px solid rgba(27, 20, 17, 0.2);
+  background: transparent;
+  color: var(--ink);
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.nav-link.active {
+  background: var(--night);
+  border-color: var(--night);
+  color: #fff;
 }
 
 .brand {
@@ -63,7 +86,7 @@
 }
 
 .brand h1 {
-  font-family: 'Fraunces', serif;
+  font-family: 'Cinzel', serif;
   font-size: clamp(2.2rem, 4vw, 3.4rem);
   margin: 0 0 8px;
 }
@@ -83,19 +106,19 @@
 .chip {
   padding: 8px 14px;
   border-radius: 999px;
-  background: var(--blue);
+  background: var(--night);
   color: #fff;
   font-weight: 600;
   font-size: 0.9rem;
 }
 
 .chip.muted {
-  background: #e9edf4;
+  background: #e9dfd2;
   color: var(--ink);
 }
 
 .ghost {
-  border: 1px solid rgba(12, 20, 36, 0.2);
+  border: 1px solid rgba(27, 20, 17, 0.25);
   background: transparent;
   color: var(--ink);
   padding: 8px 16px;
@@ -109,13 +132,106 @@
   gap: 24px;
 }
 
+.home-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+}
+
 .panel {
-  background: #fff;
+  background: var(--panel);
   border-radius: 24px;
   padding: 24px;
-  border: 1px solid rgba(12, 20, 36, 0.08);
-  box-shadow: 0 12px 30px rgba(12, 20, 36, 0.08);
+  border: 1px solid rgba(27, 20, 17, 0.08);
+  box-shadow: 0 12px 30px rgba(29, 19, 16, 0.1);
   animation: rise 0.6s ease both;
+}
+
+.progress-card h2,
+.action-card h2 {
+  margin: 0 0 12px;
+  font-family: 'Cinzel', serif;
+}
+
+.progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.progress-track {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(19, 24, 36, 0.12);
+  overflow: hidden;
+  margin: 16px 0 12px;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--blood), var(--gold));
+}
+
+.progress-meta {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+}
+
+.phase-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.phase-pill {
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(27, 20, 17, 0.12);
+  background: rgba(255, 255, 255, 0.7);
+  display: grid;
+  gap: 4px;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+}
+
+.phase-pill small {
+  font-size: 0.65rem;
+  color: var(--ink-soft);
+  text-transform: none;
+  letter-spacing: 0.04em;
+}
+
+.action-card {
+  display: grid;
+  gap: 14px;
+}
+
+.action-button {
+  width: 100%;
+}
+
+.police-form {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(19, 24, 36, 0.06);
+}
+
+.status {
+  margin: 0;
+  color: var(--night);
+  font-weight: 600;
+  font-size: 0.9rem;
 }
 
 .auth-card {
@@ -126,7 +242,7 @@
 .tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  background: #f1f4f8;
+  background: rgba(19, 24, 36, 0.08);
   padding: 6px;
   border-radius: 999px;
   gap: 6px;
@@ -142,9 +258,9 @@
 }
 
 .tab.active {
-  background: #fff;
+  background: rgba(255, 255, 255, 0.95);
   color: var(--ink);
-  box-shadow: 0 6px 14px rgba(12, 20, 36, 0.12);
+  box-shadow: 0 6px 14px rgba(19, 24, 36, 0.16);
 }
 
 .form {
@@ -161,7 +277,7 @@
 
 .input {
   border-radius: 14px;
-  border: 1px solid rgba(12, 20, 36, 0.12);
+  border: 1px solid rgba(27, 20, 17, 0.12);
   padding: 12px 14px;
   font-size: 1rem;
   font-family: inherit;
@@ -169,13 +285,13 @@
 }
 
 .input:focus {
-  outline: 2px solid rgba(46, 230, 166, 0.5);
-  border-color: rgba(46, 230, 166, 0.8);
+  outline: 2px solid rgba(122, 27, 27, 0.35);
+  border-color: rgba(122, 27, 27, 0.7);
 }
 
 .primary {
   border: none;
-  background: linear-gradient(135deg, #0b1426, #17345c);
+  background: linear-gradient(135deg, #7a1b1b, #2f1212);
   color: #fff;
   padding: 12px 18px;
   border-radius: 14px;
@@ -191,7 +307,7 @@
 
 .primary:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 12px 24px rgba(12, 20, 36, 0.22);
+  box-shadow: 0 12px 24px rgba(122, 27, 27, 0.28);
 }
 
 .helper {
@@ -209,15 +325,15 @@
 }
 
 .highlight {
-  background: linear-gradient(140deg, rgba(46, 230, 166, 0.16), rgba(255, 157, 92, 0.18));
-  border: 1px solid rgba(12, 20, 36, 0.06);
+  background: linear-gradient(140deg, rgba(122, 27, 27, 0.12), rgba(19, 24, 36, 0.18));
+  border: 1px solid rgba(27, 20, 17, 0.06);
   display: grid;
   gap: 16px;
 }
 
 .highlight h2 {
   margin: 0;
-  font-family: 'Fraunces', serif;
+  font-family: 'Cinzel', serif;
 }
 
 .highlight ul {
@@ -230,7 +346,7 @@
 
 .highlight-footer {
   padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.65);
   border-radius: 12px;
   font-weight: 600;
 }
@@ -291,8 +407,8 @@
 }
 
 .chat-item.active {
-  border-color: rgba(46, 230, 166, 0.8);
-  box-shadow: 0 10px 18px rgba(46, 230, 166, 0.18);
+  border-color: rgba(210, 179, 140, 0.9);
+  box-shadow: 0 10px 18px rgba(210, 179, 140, 0.22);
 }
 
 .chat-item strong {
@@ -311,19 +427,22 @@
 }
 
 .messages-panel {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 16px;
-  min-height: 540px;
+  height: 560px;
+  max-height: 70vh;
 }
 
 .messages {
-  background: #f6f7fb;
+  background: #f1e9dd;
   border-radius: 18px;
   padding: 16px;
   overflow-y: auto;
   display: grid;
   gap: 10px;
   flex: 1;
+  min-height: 280px;
 }
 
 .message-row {
@@ -344,7 +463,7 @@
 }
 
 .bubble.mine {
-  background: #17345c;
+  background: var(--night);
   color: #fff;
 }
 
