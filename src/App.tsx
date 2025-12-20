@@ -11,6 +11,7 @@ import {
   addDoc,
   collection,
   doc,
+  type FirestoreError,
   getDocs,
   onSnapshot,
   orderBy,
@@ -71,6 +72,16 @@ const authErrorMessage = (error: unknown) => {
   return 'Unable to sign you in right now.'
 }
 
+const formatFirestoreError = (error: FirestoreError) => {
+  if (error.code === 'failed-precondition') {
+    return 'Firestore needs an index for chats (participants array-contains + updatedAt desc).'
+  }
+  if (error.code === 'permission-denied') {
+    return 'Firestore permission denied. Check your rules.'
+  }
+  return error.message
+}
+
 function App() {
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login')
   const [numberInput, setNumberInput] = useState('')
@@ -86,6 +97,9 @@ function App() {
   const [compose, setCompose] = useState('')
   const [searchNumber, setSearchNumber] = useState('')
   const [chatError, setChatError] = useState('')
+  const [chatStreamError, setChatStreamError] = useState('')
+  const [messageStreamError, setMessageStreamError] = useState('')
+  const [pendingPartnerNumber, setPendingPartnerNumber] = useState('')
   const messageEndRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -133,19 +147,28 @@ function App() {
       orderBy('updatedAt', 'desc'),
     )
 
-    return onSnapshot(chatQuery, (snapshot) => {
-      const nextChats = snapshot.docs.map((docSnap) => {
-        const data = docSnap.data() as Omit<ChatSummary, 'id'>
-        return { id: docSnap.id, ...data }
-      })
-      setChats(nextChats)
-      setActiveChatId((prev) => prev ?? nextChats[0]?.id ?? null)
-    })
+    return onSnapshot(
+      chatQuery,
+      (snapshot) => {
+        const nextChats = snapshot.docs.map((docSnap) => {
+          const data = docSnap.data() as Omit<ChatSummary, 'id'>
+          return { id: docSnap.id, ...data }
+        })
+        setChats(nextChats)
+        setActiveChatId((prev) => prev ?? nextChats[0]?.id ?? null)
+        setChatStreamError('')
+      },
+      (error) => {
+        console.error(error)
+        setChatStreamError(formatFirestoreError(error))
+      },
+    )
   }, [user])
 
   useEffect(() => {
     if (!user || !activeChatId) {
       setMessages([])
+      setMessageStreamError('')
       return
     }
 
@@ -154,13 +177,21 @@ function App() {
       orderBy('createdAt', 'asc'),
     )
 
-    return onSnapshot(messageQuery, (snapshot) => {
-      const nextMessages = snapshot.docs.map((docSnap) => {
-        const data = docSnap.data() as Omit<MessageItem, 'id'>
-        return { id: docSnap.id, ...data }
-      })
-      setMessages(nextMessages)
-    })
+    return onSnapshot(
+      messageQuery,
+      (snapshot) => {
+        const nextMessages = snapshot.docs.map((docSnap) => {
+          const data = docSnap.data() as Omit<MessageItem, 'id'>
+          return { id: docSnap.id, ...data }
+        })
+        setMessages(nextMessages)
+        setMessageStreamError('')
+      },
+      (error) => {
+        console.error(error)
+        setMessageStreamError(formatFirestoreError(error))
+      },
+    )
   }, [user, activeChatId])
 
   useEffect(() => {
@@ -179,6 +210,15 @@ function App() {
     )
     return other ?? ''
   }, [activeChat, currentNumber])
+
+  useEffect(() => {
+    if (partnerNumber) {
+      setPendingPartnerNumber('')
+    }
+  }, [partnerNumber])
+
+  const hasActiveChat = Boolean(activeChatId)
+  const displayPartnerNumber = partnerNumber || pendingPartnerNumber
 
   const handleAuthSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -272,6 +312,7 @@ function App() {
     )
 
     setActiveChatId(chatId)
+    setPendingPartnerNumber(cleanedTarget)
     setSearchNumber('')
   }
 
@@ -441,40 +482,54 @@ function App() {
                 </button>
               </form>
               {chatError ? <p className="error">{chatError}</p> : null}
+              {chatStreamError ? <p className="error">{chatStreamError}</p> : null}
               <div className="chat-list">
-                {chats.length === 0 ? (
+                {chats.length === 0 && !hasActiveChat ? (
                   <div className="empty">No chats yet. Start one!</div>
                 ) : (
-                  chats.map((chat) => {
-                    const label =
-                      chat.participantNumbers?.find(
-                        (number) => number !== currentNumber,
-                      ) ?? 'Unknown'
-                    return (
-                      <button
-                        key={chat.id}
-                        className={
-                          chat.id === activeChatId
-                            ? 'chat-item active'
-                            : 'chat-item'
-                        }
-                        type="button"
-                        onClick={() => setActiveChatId(chat.id)}
-                      >
+                  <>
+                    {hasActiveChat && !activeChat ? (
+                      <div className="chat-item pending">
                         <div>
-                          <strong>{label}</strong>
+                          <strong>{displayPartnerNumber || 'New chat'}</strong>
                           <span className="meta">
-                            {chat.lastMessage
-                              ? chat.lastMessage
-                              : 'No messages yet'}
+                            Waiting for chat to sync...
                           </span>
                         </div>
-                        <span className="time">
-                          {formatTime(chat.updatedAt ?? null)}
-                        </span>
-                      </button>
-                    )
-                  })
+                        <span className="time">just now</span>
+                      </div>
+                    ) : null}
+                    {chats.map((chat) => {
+                      const label =
+                        chat.participantNumbers?.find(
+                          (number) => number !== currentNumber,
+                        ) ?? 'Unknown'
+                      return (
+                        <button
+                          key={chat.id}
+                          className={
+                            chat.id === activeChatId
+                              ? 'chat-item active'
+                              : 'chat-item'
+                          }
+                          type="button"
+                          onClick={() => setActiveChatId(chat.id)}
+                        >
+                          <div>
+                            <strong>{label}</strong>
+                            <span className="meta">
+                              {chat.lastMessage
+                                ? chat.lastMessage
+                                : 'No messages yet'}
+                            </span>
+                          </div>
+                          <span className="time">
+                            {formatTime(chat.updatedAt ?? null)}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </>
                 )}
               </div>
             </aside>
@@ -482,20 +537,29 @@ function App() {
             <section className="panel messages-panel">
               <div className="panel-header">
                 <div>
-                  <h2>{partnerNumber ? `Chat with ${partnerNumber}` : 'Chat'}</h2>
+                  <h2>
+                    {displayPartnerNumber
+                      ? `Chat with ${displayPartnerNumber}`
+                      : 'Chat'}
+                  </h2>
                   <p>
-                    {activeChat
+                    {hasActiveChat
                       ? 'Keep it warm and friendly.'
                       : 'Select a chat on the left.'}
                   </p>
                 </div>
                 <span className="chip muted">
-                  {activeChat ? `${messages.length} messages` : 'No chat selected'}
+                  {hasActiveChat
+                    ? `${messages.length} messages`
+                    : 'No chat selected'}
                 </span>
               </div>
+              {messageStreamError ? (
+                <p className="error">{messageStreamError}</p>
+              ) : null}
 
               <div className="messages">
-                {activeChat ? (
+                {hasActiveChat ? (
                   messages.length ? (
                     messages.map((message) => {
                       const isMine = message.senderId === user.uid
@@ -529,13 +593,17 @@ function App() {
                 <input
                   className="input"
                   placeholder={
-                    activeChat ? 'Write a message...' : 'Select a chat first'
+                    hasActiveChat ? 'Write a message...' : 'Select a chat first'
                   }
                   value={compose}
                   onChange={(event) => setCompose(event.target.value)}
-                  disabled={!activeChat}
+                  disabled={!hasActiveChat}
                 />
-                <button className="primary" type="submit" disabled={!activeChat}>
+                <button
+                  className="primary"
+                  type="submit"
+                  disabled={!hasActiveChat}
+                >
                   Send
                 </button>
               </form>

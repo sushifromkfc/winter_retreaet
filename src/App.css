@@ -200,6 +200,7 @@
   font-size: 0.9rem;
 }
 
+
 .error {
   margin: 0;
   color: #b42318;
@@ -281,6 +282,12 @@
   background: #fff;
   text-align: left;
   cursor: pointer;
+}
+
+.chat-item.pending {
+  cursor: default;
+  border-style: dashed;
+  opacity: 0.75;
 }
 
 .chat-item.active {
