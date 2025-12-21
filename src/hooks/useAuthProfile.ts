@@ -6,12 +6,14 @@ import { auth, db } from '../firebase'
 type AuthProfile = {
   user: User | null
   currentNumber: string
+  displayName: string
   loadingProfile: boolean
 }
 
 export const useAuthProfile = (): AuthProfile => {
   const [user, setUser] = useState<User | null>(null)
   const [currentNumber, setCurrentNumber] = useState('')
+  const [displayName, setDisplayName] = useState('')
   const [loadingProfile, setLoadingProfile] = useState(true)
 
   useEffect(() => {
@@ -19,6 +21,7 @@ export const useAuthProfile = (): AuthProfile => {
       setUser(nextUser)
       if (!nextUser) {
         setCurrentNumber('')
+        setDisplayName('')
         setLoadingProfile(false)
         return
       }
@@ -36,8 +39,10 @@ export const useAuthProfile = (): AuthProfile => {
       if (snapshot.exists()) {
         const data = snapshot.data()
         setCurrentNumber(String(data.number ?? ''))
+        setDisplayName(String(data.displayName ?? ''))
       } else {
         setCurrentNumber('')
+        setDisplayName('')
       }
       setLoadingProfile(false)
     })
@@ -45,5 +50,5 @@ export const useAuthProfile = (): AuthProfile => {
     return () => unsubscribe()
   }, [user])
 
-  return { user, currentNumber, loadingProfile }
+  return { user, currentNumber, displayName, loadingProfile }
 }

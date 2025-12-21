@@ -112,6 +112,17 @@
   font-size: 0.9rem;
 }
 
+.chip-button {
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.chip-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(19, 24, 36, 0.25);
+}
+
 .chip.muted {
   background: #e9dfd2;
   color: var(--ink);
@@ -138,6 +149,36 @@
   gap: 24px;
 }
 
+.dashboard {
+  display: grid;
+  place-items: center;
+}
+
+.dashboard-card {
+  width: min(520px, 100%);
+  display: grid;
+  gap: 16px;
+}
+
+.dashboard-card h2 {
+  margin: 0;
+  font-family: 'Cinzel', serif;
+}
+
+.dashboard-id {
+  background: rgba(19, 24, 36, 0.08);
+  border-radius: 16px;
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+}
+
+.dashboard-id span {
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
 .panel {
   background: var(--panel);
   border-radius: 24px;
