@@ -153,8 +153,10 @@ export const MessagesPage = ({
                       <p>{message.text}</p>
                     </div>
                     <span className={isMine ? 'message-meta mine' : 'message-meta'}>
-                      {isMine ? 'You' : message.senderNumber ?? 'Friend'} •{' '}
-                      {formatTime(message.createdAt ?? null)}
+                      {isMine
+                        ? 'You'
+                        : message.senderName ?? message.senderNumber ?? 'Friend'}{' '}
+                      • {formatTime(message.createdAt ?? null)}
                     </span>
                   </div>
                 )

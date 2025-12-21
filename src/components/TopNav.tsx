@@ -1,4 +1,4 @@
-type Page = 'home' | 'messages'
+type Page = 'home' | 'messages' | 'dashboard'
 
 type TopNavProps = {
   page: Page
@@ -20,6 +20,13 @@ export const TopNav = ({ page, onChange }: TopNavProps) => (
       onClick={() => onChange('messages')}
     >
       Messages
+    </button>
+    <button
+      className={page === 'dashboard' ? 'nav-link active' : 'nav-link'}
+      type="button"
+      onClick={() => onChange('dashboard')}
+    >
+      Dashboard
     </button>
   </nav>
 )

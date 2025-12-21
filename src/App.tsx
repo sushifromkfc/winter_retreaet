@@ -7,6 +7,7 @@ import {
 import { addDoc, collection, doc, serverTimestamp, setDoc } from 'firebase/firestore'
 import { auth, db } from './firebase'
 import { AuthPage } from './components/AuthPage'
+import { DashboardPage } from './components/DashboardPage'
 import { HeaderBar } from './components/HeaderBar'
 import { HomePage } from './components/HomePage'
 import { MessagesPage } from './components/MessagesPage'
@@ -51,9 +52,12 @@ function App() {
   const [policeNumber, setPoliceNumber] = useState('')
   const [policeStatus, setPoliceStatus] = useState('')
   const [policeError, setPoliceError] = useState('')
-  const [page, setPage] = useState<'home' | 'messages'>('home')
+  const [page, setPage] = useState<'home' | 'messages' | 'dashboard'>('home')
+  const [nameInput, setNameInput] = useState('')
+  const [nameStatus, setNameStatus] = useState('')
+  const [nameError, setNameError] = useState('')
 
-  const { user, currentNumber, loadingProfile } = useAuthProfile()
+  const { user, currentNumber, displayName, loadingProfile } = useAuthProfile()
   const { chats, activeChatId, setActiveChatId, chatStreamError } =
     useChatList(user)
   const { messages, messageStreamError } = useMessages(user, activeChatId)
@@ -80,6 +84,10 @@ function App() {
   }, [partnerNumber])
 
   useEffect(() => {
+    setNameInput(displayName)
+  }, [displayName])
+
+  useEffect(() => {
     if (!user) {
       setPage('home')
       setSearchNumber('')
@@ -89,6 +97,9 @@ function App() {
       setPoliceNumber('')
       setPoliceStatus('')
       setPoliceError('')
+      setNameInput('')
+      setNameStatus('')
+      setNameError('')
     }
   }, [user])
 
@@ -171,6 +182,7 @@ function App() {
         await setDoc(doc(db, 'users', credential.user.uid), {
           number: cleanedNumber,
           createdAt: serverTimestamp(),
+          displayName: '',
         })
       }
 
@@ -209,12 +221,27 @@ function App() {
     const trimmed = compose.trim()
     if (!trimmed) return
 
-    await addDoc(collection(db, 'chats', activeChatId, 'messages'), {
+    const senderName = displayName.trim()
+    const messagePayload: {
+      text: string
+      senderId: string
+      senderNumber: string
+      createdAt: ReturnType<typeof serverTimestamp>
+      senderName?: string
+    } = {
       text: trimmed,
       senderId: user.uid,
       senderNumber: currentNumber,
       createdAt: serverTimestamp(),
-    })
+    }
+    if (senderName) {
+      messagePayload.senderName = senderName
+    }
+
+    await addDoc(
+      collection(db, 'chats', activeChatId, 'messages'),
+      messagePayload,
+    )
 
     await setDoc(
       doc(db, 'chats', activeChatId),
@@ -251,6 +278,29 @@ function App() {
     await signOut(auth)
   }
 
+  const handleNameSave = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setNameError('')
+    setNameStatus('')
+    if (!user) {
+      setNameError('Sign in to update your profile.')
+      return
+    }
+
+    const trimmed = nameInput.trim()
+    if (!trimmed) {
+      setNameError('Name cannot be empty.')
+      return
+    }
+
+    await setDoc(
+      doc(db, 'users', user.uid),
+      { displayName: trimmed },
+      { merge: true },
+    )
+    setNameStatus('Name updated.')
+  }
+
   return (
     <div className="app">
       <div className="glow glow-one" />
@@ -261,6 +311,7 @@ function App() {
           loadingProfile={loadingProfile}
           currentNumber={currentNumber}
           onSignOut={handleSignOut}
+          onIdClick={() => setPage('dashboard')}
         />
         {user ? <TopNav page={page} onChange={setPage} /> : null}
 
@@ -290,6 +341,15 @@ function App() {
             }
             onPoliceSubmit={handleContactPolice}
             onOpenMessages={() => setPage('messages')}
+          />
+        ) : page === 'dashboard' ? (
+          <DashboardPage
+            currentNumber={currentNumber}
+            nameInput={nameInput}
+            status={nameStatus}
+            error={nameError}
+            onNameChange={setNameInput}
+            onSubmit={handleNameSave}
           />
         ) : (
           <MessagesPage

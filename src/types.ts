@@ -13,6 +13,7 @@ export type MessageItem = {
   text: string
   senderId: string
   senderNumber?: string
+  senderName?: string
   createdAt?: Timestamp
 }
 
