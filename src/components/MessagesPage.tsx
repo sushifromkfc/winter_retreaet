@@ -151,11 +151,11 @@ export const MessagesPage = ({
                       className={isMine ? 'bubble mine' : 'bubble'}
                     >
                       <p>{message.text}</p>
-                      <span className="meta">
-                        {isMine ? 'You' : message.senderNumber ?? 'Friend'} •{' '}
-                        {formatTime(message.createdAt ?? null)}
-                      </span>
                     </div>
+                    <span className={isMine ? 'message-meta mine' : 'message-meta'}>
+                      {isMine ? 'You' : message.senderNumber ?? 'Friend'} •{' '}
+                      {formatTime(message.createdAt ?? null)}
+                    </span>
                   </div>
                 )
               })
