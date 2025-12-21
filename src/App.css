@@ -2,7 +2,7 @@
   min-height: 100vh;
   padding: 32px;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
   display: flex;
   align-items: stretch;
   justify-content: center;
