@@ -61,7 +61,7 @@ export const HomePage = ({
           <input
             className="input"
             inputMode="numeric"
-            pattern="\\d{6}"
+            maxLength={6}
             placeholder="Police/admin ID"
             value={policeNumber}
             onChange={(event) => onPoliceNumberChange(event.target.value)}

@@ -50,7 +50,7 @@ export const AuthPage = ({
           <input
             className="input"
             inputMode="numeric"
-            pattern="\\d{6}"
+            maxLength={6}
             placeholder="e.g. 482901"
             value={numberInput}
             onChange={(event) => onNumberChange(event.target.value)}

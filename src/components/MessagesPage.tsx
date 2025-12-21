@@ -64,7 +64,7 @@ export const MessagesPage = ({
           <input
             className="input"
             inputMode="numeric"
-            pattern="\\d{6}"
+            maxLength={6}
             placeholder="Friend ID"
             value={searchNumber}
             onChange={(event) =>
