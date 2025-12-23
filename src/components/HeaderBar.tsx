@@ -5,6 +5,7 @@ type HeaderBarProps = {
   loadingProfile: boolean
   currentNumber: string
   onSignOut: () => void
+  onIdClick: () => void
 }
 
 export const HeaderBar = ({
@@ -12,6 +13,7 @@ export const HeaderBar = ({
   loadingProfile,
   currentNumber,
   onSignOut,
+  onIdClick,
 }: HeaderBarProps) => (
   <header className="brand">
     <div>
@@ -24,9 +26,13 @@ export const HeaderBar = ({
     </div>
     {user ? (
       <div className="account">
-        <div className="chip">
+        <button
+          className="chip chip-button"
+          type="button"
+          onClick={onIdClick}
+        >
           {loadingProfile ? 'Loading ID...' : `ID ${currentNumber || '------'}`}
-        </div>
+        </button>
         <button className="ghost" type="button" onClick={onSignOut}>
           Sign out
         </button>
